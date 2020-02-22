@@ -1,21 +1,35 @@
 Analyzing L.A. County’s changing languages in Census microdata
 ================
 
-By [Ryan Menezes](https://twitter.com/ryanvmenezes/)
+**By [Ryan Menezes](https://twitter.com/ryanvmenezes/)**
+
+This file goes over the data and R code used to analyze the changes in
+L.A. County’s spoken languages for the Feb. 17, 2020 L.A. Times story on
+[local libraries’ attempts to supply books in languages other than
+English](https://www.latimes.com/la-me-libraries-languages-diversity-2019-story.html)
+to an ever-changing population.
+
+It uses the following two R packages:
 
 ``` r
 library(ipumsr)
 library(tidyverse)
 ```
 
-The IPUMS-USA extract comes with two files:
+This analysis uses a custom microdata extract from IPUMS-USA. If you
+need an introduction to microdata, I recommend this [excellent
+write-up](https://source.opennews.org/articles/when-and-how-use-census-microdata/)
+by Robert Gebeloff.
+
+The data extract comes with two files:
 
 1.  A fixed-width data file in a compressed folder
 2.  A data codebook in an XML format, which describes the data based on
     the [Data Documentation Initative](https://ddialliance.org/), or
     “DDI”
 
-The `ipumsr` package can read in both.
+The `ipumsr` package can read in both, provided they have equivalent
+names.
 
 ``` r
 ddi = read_ipums_ddi('data/usa_00011.xml')
@@ -27,7 +41,7 @@ data = read_ipums_micro(ddi)
 
 ## The codebook
 
-The DDI details the variables in the extract.
+The DDI details the variables in the extract:
 
 ``` r
 info.variables = ddi$var_info
@@ -56,8 +70,9 @@ info.variables
 The key column in this extract is
 [LANGUAGE](https://usa.ipums.org/usa-action/variables/LANGUAGE), which
 “reports the language that the respondent spoke at home, particularly
-if a language other than English was spoken.” The codebook provides the
-values for every LANGUAGED code.
+if a language other than English was spoken.”
+
+The codebook provides the values for every LANGUAGED code:
 
 ``` r
 info.variables %>% 
@@ -166,9 +181,14 @@ year and the county rank for that year.
 la.languages = la.data.agg %>% 
   group_by(YEAR) %>% 
   mutate(percent = PERWT / sum(PERWT)) %>% 
-  # take out "N/A or blank" before calculating rank
-  filter(LANGUAGE != 0) %>% 
-  mutate(rankinyear = rank(desc(percent))) %>% 
+  # take out "N/A or blank" before calculating rank in year
+  mutate(
+    rankinyear = rank(
+      desc(if_else(LANGUAGE != 0, percent, NA_real_)),
+      na.last = 'keep',
+      ties.method = 'min'
+    )
+  ) %>% 
   ungroup(YEAR) %>% 
   transmute(
     year = YEAR,
@@ -183,13 +203,13 @@ la.languages %>% head()
 
     ## # A tibble: 6 x 6
     ##    year langcode language          total  percent rankinyear
-    ##   <int>    <int> <chr>             <dbl>    <dbl>      <dbl>
-    ## 1  1980        1 English         4888960 0.652             1
-    ## 2  1980        2 German            47660 0.00636           7
-    ## 3  1980        3 Yiddish, Jewish   18900 0.00252          12
-    ## 4  1980        4 Dutch             13560 0.00181          16
-    ## 5  1980        5 Swedish            3780 0.000504         28
-    ## 6  1980        6 Danish             2820 0.000376         33
+    ##   <int>    <int> <chr>             <dbl>    <dbl>      <int>
+    ## 1  1980        0 N/A or blank     346500 0.0462           NA
+    ## 2  1980        1 English         4888960 0.652             1
+    ## 3  1980        2 German            47660 0.00636           7
+    ## 4  1980        3 Yiddish, Jewish   18900 0.00252          12
+    ## 5  1980        4 Dutch             13560 0.00181          16
+    ## 6  1980        5 Swedish            3780 0.000504         28
 
 ## Analysis
 
@@ -198,13 +218,13 @@ What were the top 10 languages spoken in 1980?
 ``` r
 la.languages %>% 
   filter(year == 1980) %>% 
-  arrange(-total) %>% 
+  arrange(rankinyear) %>% 
   head(10)
 ```
 
     ## # A tibble: 10 x 6
     ##     year langcode language            total percent rankinyear
-    ##    <int>    <int> <chr>               <dbl>   <dbl>      <dbl>
+    ##    <int>    <int> <chr>               <dbl>   <dbl>      <int>
     ##  1  1980        1 English           4888960 0.652            1
     ##  2  1980       12 Spanish           1591000 0.212            2
     ##  3  1980       43 Chinese             77920 0.0104           3
@@ -221,13 +241,13 @@ What were the top 10 languages spoken in 2018?
 ``` r
 la.languages %>% 
   filter(year == 2018) %>% 
-  arrange(-total) %>% 
+  arrange(rankinyear) %>% 
   head(10)
 ```
 
     ## # A tibble: 10 x 6
     ##     year langcode language                  total percent rankinyear
-    ##    <int>    <int> <chr>                     <dbl>   <dbl>      <dbl>
+    ##    <int>    <int> <chr>                     <dbl>   <dbl>      <int>
     ##  1  2018        1 English                 4108477 0.407            1
     ##  2  2018       12 Spanish                 3741860 0.370            2
     ##  3  2018       43 Chinese                  401703 0.0398           3
@@ -240,10 +260,10 @@ la.languages %>%
     ## 10  2018       48 Japanese                  49664 0.00492         10
 
 How have English and Spanish, far and away the top languages, changed
-over time?
+over time? (A version of this chart ran with the final story.)
 
 ``` r
-la.languages %>% 
+plot.eng.esp.yearly = la.languages %>% 
   filter(language %in% c('English', 'Spanish')) %>% 
   ggplot(aes(year, percent * 100, color = language)) +
   geom_line() +
@@ -252,6 +272,8 @@ la.languages %>%
   ylab('Percent of county population') +
   ggtitle('English and Spanish speakers in L.A. County') +
   theme_minimal()
+
+plot.eng.esp.yearly
 ```
 
 ![](analysis_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
@@ -272,7 +294,7 @@ ever.top.10 %>% head()
 
     ## # A tibble: 6 x 6
     ##   language  year langcode   total percent rankinyear
-    ##   <chr>    <int>    <int>   <dbl>   <dbl>      <dbl>
+    ##   <chr>    <int>    <int>   <dbl>   <dbl>      <int>
     ## 1 English   1980        1 4888960 0.652            1
     ## 2 English   1990        1 4436610 0.501            1
     ## 3 English   2000        1 4036798 0.424            1
@@ -294,13 +316,11 @@ unique(ever.top.10$language)
 
 This leaves 13 languages to look at more closely.
 
-## Plots
-
 Let’s take out English and Spanish. How has the percentage of the
 population speaking a particular language changed over time?
 
 ``` r
-lang.yearly.barplot = ever.top.10 %>%
+plot.lang.yearly.bars = ever.top.10 %>%
   # take out the two biggest
   filter(!language %in% c('English', 'Spanish')) %>% 
   arrange(-year, -total) %>% 
@@ -314,7 +334,7 @@ lang.yearly.barplot = ever.top.10 %>%
   ggtitle('All languages ever in the top 10 spoken in L.A. County') +
   theme_minimal()
 
-lang.yearly.barplot
+plot.lang.yearly.bars
 ```
 
 ![](analysis_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
@@ -322,7 +342,7 @@ lang.yearly.barplot
 What has the top 10 looked like over time?
 
 ``` r
-top.10.by.year = ever.top.10 %>%
+plot.ranks.by.year = ever.top.10 %>%
   mutate(language = fct_inorder(language)) %>% 
   ggplot(aes(x = year, y = rankinyear, group = language)) +
   geom_point(aes(size = total), color = 'grey') +
@@ -350,7 +370,7 @@ top.10.by.year = ever.top.10 %>%
   xlab('') + 
   ggtitle('Top 10 languages spoken in L.A. County')
 
-top.10.by.year +
+plot.top.10.by.year = plot.ranks.by.year +
   # annotate with names at end
   geom_text(
     data = . %>% group_by(language) %>% filter(rankinyear <= 10) %>% filter(year == max(year)),
@@ -358,6 +378,8 @@ top.10.by.year +
     hjust = 'left',
     size = 3
   )
+
+plot.top.10.by.year
 ```
 
 ![](analysis_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
@@ -365,7 +387,7 @@ top.10.by.year +
 How have these languages risen and fallen in and out of the top 10?
 
 ``` r
-top.10.by.year +
+plot.top.10.rise.fall = plot.ranks.by.year +
   scale_y_reverse(
     breaks = 1:25,
     minor_breaks = NULL
@@ -376,17 +398,21 @@ top.10.by.year +
     aes(year + 0.76, rankinyear, label = str_replace_all(word(language), ',', '')),
     hjust = 'left',
     size = 3
-  )
+  ) +
+  ggtitle('All languages that have recently been in the top 10 for L.A. County')
+
+plot.top.10.rise.fall
 ```
 
 ![](analysis_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
 Summarize the change in languages other than English and Spanish by
-calculating the difference between now and 1980.
+calculating the difference between now and 1980. (A version of this
+chart ran with the final story.)
 
 ``` r
 ever.top.10 %>% 
-  filter(!language %in% c('English', 'Spanish')) %>% 
+  filter(!language %in% c('English', 'Spanish')) %>%
   filter(year == 1980 | year == 2018) %>% 
   arrange(-total) %>% 
   select(language, year, percent) %>% 
@@ -404,8 +430,27 @@ ever.top.10 %>%
     aes(x = `1980`, xend = `2018`, y = language, yend = language, color = netgain),
     arrow = arrow(length = unit(0.2, "cm"))
   ) +
+  geom_text(
+    data = . %>% filter(language == 'Chinese' & year == 1980),
+    aes(percent - 0.15, language, label = '1980'),
+    size = 3.5
+  ) +
+  geom_text(
+    data = . %>% filter(language == 'Chinese' & year == 2018),
+    aes(percent + 0.15, language, label = '2018'),
+    size = 3.5
+  ) +
   theme_minimal() +
-  theme(legend.position = 'none')
+  theme(legend.position = 'none') +
+  xlab('Percent of county population') +
+  ylab('Language') +
+  ggtitle('Change in percentage of L.A. county population by language')
 ```
 
 ![](analysis_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+
+Write out the cleaned file:
+
+``` r
+la.languages %>% write_csv('los-angeles-county-languages.csv', na = '')
+```
