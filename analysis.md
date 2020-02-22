@@ -151,9 +151,16 @@ la.data.agg %>% head()
     ## 5  1980 4 [Dutch]             13560
     ## 6  1980 5 [Swedish]            3780
 
-Reformat the data, separating the labels from the code, plus add columns
-for the percent of the population speaking that language in each year
-and the county rank for that year.
+This simple grouping and summing does **not** account for the margins of
+error associated with the estimates, which are important to consider.
+For those, I referred to [the result of the equivalent
+query](data/query-la-county-all-languages.pdf) on the IPUMS online SDA
+querying tool. The results of this microdata analysis and the SDA query
+are nearly identical.
+
+Next, reformat the data, separating the labels from the code, plus add
+columns for the percent of the population speaking that language in each
+year and the county rank for that year.
 
 ``` r
 la.languages = la.data.agg %>% 
@@ -285,7 +292,12 @@ unique(ever.top.10$language)
     ## [11] "Persian, Iranian, Farsi" "Vietnamese"             
     ## [13] "Hindi and related"
 
-This leaves 13 languages to look at
+This leaves 13 languages to look at more closely.
+
+## Plots
+
+Let’s take out English and Spanish. How has the percentage of the
+population speaking a particular language changed over time?
 
 ``` r
 lang.yearly.barplot = ever.top.10 %>%
