@@ -51,20 +51,20 @@ info.variables
     ## # A tibble: 14 x 10
     ##    var_name var_label var_desc val_labels code_instr start   end imp_decim
     ##    <chr>    <chr>     <chr>    <list>     <chr>      <dbl> <dbl>     <dbl>
-    ##  1 YEAR     Census y… "YEAR r… <tibble […  <NA>          1     4         0
-    ##  2 SAMPLE   IPUMS sa… "SAMPLE… <tibble […  <NA>          5    10         0
+    ##  1 YEAR     Census y… "YEAR r… <tibble [… <NA>           1     4         0
+    ##  2 SAMPLE   IPUMS sa… "SAMPLE… <tibble [… <NA>           5    10         0
     ##  3 SERIAL   Househol… "SERIAL… <tibble [… "\nSERIAL…    11    18         0
     ##  4 CBSERIAL Original… "CBSERI… <tibble [… "\nCBSERI…    19    31         0
     ##  5 HHWT     Househol… "HHWT i… <tibble [… "\nHHWT i…    32    41         2
-    ##  6 CLUSTER  Househol… "CLUSTE… <tibble [… "\nCLUSTE…    42    54         0
-    ##  7 STATEFIP State (F… "STATEF… <tibble […  <NA>         55    56         0
+    ##  6 CLUSTER  Househol… CLUSTER… <tibble [… "\nCLUSTE…    42    54         0
+    ##  7 STATEFIP State (F… "STATEF… <tibble [… <NA>          55    56         0
     ##  8 COUNTYF… County (… "COUNTY… <tibble [… "\nCOUNTY…    57    59         0
     ##  9 STRATA   Househol… "STRATA… <tibble [… "\nSTRATA…    60    71         0
-    ## 10 GQ       Group qu… "GQ cla… <tibble […  <NA>         72    72         0
-    ## 11 PERNUM   Person n… "PERNUM… <tibble [… "\n\nPERN…    73    76         0
+    ## 10 GQ       Group qu… "GQ cla… <tibble [… <NA>          72    72         0
+    ## 11 PERNUM   Person n… PERNUM … <tibble [… "\n\nPERN…    73    76         0
     ## 12 PERWT    Person w… "PERWT … <tibble [… "\nPERWT …    77    86         2
-    ## 13 LANGUAGE Language… "LANGUA… <tibble […  <NA>         87    88         0
-    ## 14 LANGUAG… Language… "LANGUA… <tibble […  <NA>         89    92         0
+    ## 13 LANGUAGE Language… LANGUAG… <tibble [… <NA>          87    88         0
+    ## 14 LANGUAG… Language… LANGUAG… <tibble [… <NA>          89    92         0
     ## # … with 2 more variables: var_type <chr>, rectypes <lgl>
 
 The key column in this extract is
