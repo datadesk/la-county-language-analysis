@@ -9,7 +9,7 @@ L.A. County’s spoken languages for the Feb. 17, 2020 L.A. Times story on
 English](https://www.latimes.com/la-me-libraries-languages-diversity-2019-story.html)
 to an ever-changing population.
 
-It uses the following two R packages:
+It uses the following R packages:
 
 ``` r
 library(ipumsr)
@@ -51,20 +51,20 @@ info.variables
     ## # A tibble: 14 x 10
     ##    var_name var_label var_desc val_labels code_instr start   end imp_decim
     ##    <chr>    <chr>     <chr>    <list>     <chr>      <dbl> <dbl>     <dbl>
-    ##  1 YEAR     Census y… "YEAR r… <tibble [… <NA>           1     4         0
-    ##  2 SAMPLE   IPUMS sa… "SAMPLE… <tibble [… <NA>           5    10         0
+    ##  1 YEAR     Census y… "YEAR r… <tibble […  <NA>          1     4         0
+    ##  2 SAMPLE   IPUMS sa… "SAMPLE… <tibble […  <NA>          5    10         0
     ##  3 SERIAL   Househol… "SERIAL… <tibble [… "\nSERIAL…    11    18         0
     ##  4 CBSERIAL Original… "CBSERI… <tibble [… "\nCBSERI…    19    31         0
     ##  5 HHWT     Househol… "HHWT i… <tibble [… "\nHHWT i…    32    41         2
-    ##  6 CLUSTER  Househol… CLUSTER… <tibble [… "\nCLUSTE…    42    54         0
-    ##  7 STATEFIP State (F… "STATEF… <tibble [… <NA>          55    56         0
+    ##  6 CLUSTER  Househol… "CLUSTE… <tibble [… "\nCLUSTE…    42    54         0
+    ##  7 STATEFIP State (F… "STATEF… <tibble […  <NA>         55    56         0
     ##  8 COUNTYF… County (… "COUNTY… <tibble [… "\nCOUNTY…    57    59         0
     ##  9 STRATA   Househol… "STRATA… <tibble [… "\nSTRATA…    60    71         0
-    ## 10 GQ       Group qu… "GQ cla… <tibble [… <NA>          72    72         0
-    ## 11 PERNUM   Person n… PERNUM … <tibble [… "\n\nPERN…    73    76         0
+    ## 10 GQ       Group qu… "GQ cla… <tibble […  <NA>         72    72         0
+    ## 11 PERNUM   Person n… "PERNUM… <tibble [… "\n\nPERN…    73    76         0
     ## 12 PERWT    Person w… "PERWT … <tibble [… "\nPERWT …    77    86         2
-    ## 13 LANGUAGE Language… LANGUAG… <tibble [… <NA>          87    88         0
-    ## 14 LANGUAG… Language… LANGUAG… <tibble [… <NA>          89    92         0
+    ## 13 LANGUAGE Language… "LANGUA… <tibble […  <NA>         87    88         0
+    ## 14 LANGUAG… Language… "LANGUA… <tibble […  <NA>         89    92         0
     ## # … with 2 more variables: var_type <chr>, rectypes <lgl>
 
 The key column in this extract is
@@ -211,6 +211,29 @@ la.languages %>% head()
     ## 5  1980        4 Dutch             13560 0.00181          16
     ## 6  1980        5 Swedish            3780 0.000504         28
 
+A quick check to ground truth the data: If you sum up the totals by
+year, does it come out to the county population over time?
+
+``` r
+la.languages %>% 
+  group_by(year) %>% 
+  summarise(total = sum(total))
+```
+
+    ## # A tibble: 5 x 2
+    ##    year    total
+    ##   <int>    <dbl>
+    ## 1  1980  7495180
+    ## 2  1990  8849529
+    ## 3  2000  9523839
+    ## 4  2010  9828277
+    ## 5  2018 10103847
+
+This looks [about
+right](https://en.wikipedia.org/wiki/Demographics_of_Los_Angeles_County).
+Populations will differ slightly based on these totals coming from
+aggregating person-level responses, but we are close.
+
 ## Analysis
 
 What were the top 10 languages spoken in 1980?
@@ -276,7 +299,7 @@ plot.eng.esp.yearly = la.languages %>%
 plot.eng.esp.yearly
 ```
 
-![](analysis_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+![](analysis_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
 How about the other languages?
 
@@ -337,7 +360,7 @@ plot.lang.yearly.bars = ever.top.10 %>%
 plot.lang.yearly.bars
 ```
 
-![](analysis_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+![](analysis_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
 
 What has the top 10 looked like over time?
 
@@ -345,6 +368,7 @@ What has the top 10 looked like over time?
 plot.ranks.by.year = ever.top.10 %>%
   mutate(language = fct_inorder(language)) %>% 
   ggplot(aes(x = year, y = rankinyear, group = language)) +
+  geom_hline(yintercept = 10.5, linetype = 2, alpha = 0.3) +
   geom_point(aes(size = total), color = 'grey') +
   geom_line(color = 'grey') +
   geom_point(
@@ -358,11 +382,13 @@ plot.ranks.by.year = ever.top.10 %>%
   scale_x_continuous(
     limits = c(1980, 2021),
     breaks = c(1980, 1990, 2000, 2010, 2018),
+    minor_breaks = NULL
   ) +
   scale_colour_brewer(palette = 'Paired') +
   scale_y_reverse(
     breaks = 1:10,
-    limits = c(10,1)
+    limits = c(10,1),
+    minor_breaks = NULL
   ) +
   theme_minimal() +
   theme(legend.position = 'none') +
@@ -382,7 +408,7 @@ plot.top.10.by.year = plot.ranks.by.year +
 plot.top.10.by.year
 ```
 
-![](analysis_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+![](analysis_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
 How have these languages risen and fallen in and out of the top 10?
 
@@ -404,14 +430,14 @@ plot.top.10.rise.fall = plot.ranks.by.year +
 plot.top.10.rise.fall
 ```
 
-![](analysis_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+![](analysis_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
 
 Summarize the change in languages other than English and Spanish by
 calculating the difference between now and 1980. (A version of this
 chart ran with the final story.)
 
 ``` r
-ever.top.10 %>% 
+plot.change.1980.2018 = ever.top.10 %>% 
   filter(!language %in% c('English', 'Spanish')) %>%
   filter(year == 1980 | year == 2018) %>% 
   arrange(-total) %>% 
@@ -445,9 +471,11 @@ ever.top.10 %>%
   xlab('Percent of county population') +
   ylab('Language') +
   ggtitle('Change in percentage of L.A. county population by language')
+
+plot.change.1980.2018
 ```
 
-![](analysis_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+![](analysis_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
 
 Write out the cleaned file:
 
